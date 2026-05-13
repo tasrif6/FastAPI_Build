@@ -1,0 +1,27 @@
+{
+  "version": "1",
+  "name": "fastapiPractise",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ],
+  "size": 0,
+  "filesCount": 0,
+  "presets": {
+    "requestType": "http",
+    "requestUrl": "localhost:8000"
+  },
+  "proxy": {
+    "enabled": "global",
+    "protocol": "http",
+    "hostname": "localhost",
+    "port": 5432,
+    "auth": {
+      "enabled": false,
+      "username": "postgres",
+      "password": "123456"
+    },
+    "bypassProxy": ""
+  }
+}

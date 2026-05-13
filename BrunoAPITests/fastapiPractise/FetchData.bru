@@ -1,0 +1,22 @@
+meta {
+  name: FetchData
+  type: http
+  seq: 1
+}
+
+patch {
+  url: http://127.0.0.1:8000/garage/4
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "BMW M8"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
