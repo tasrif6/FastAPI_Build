@@ -174,3 +174,16 @@ def deletion_function(id: int, db: Session= Depends(get_db)):
     deleted_car.delete(synchronize_session=False)
     db.commit()
     return (f"Car with id{id} is deleted")
+
+@app.patch("/garage/sqlalchemy/{id}")
+def partial_update(id: int, garage : Garage, db: Session = Depends(get_db)):
+    partial_update = db.query(models.Garage).filter(models.Garage.id == id)
+    if partial_update.first() is None:
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = f"Car with the id {id} could not be partially updated"
+        )
+    new_car = garage.model_dump()
+    partial_updated_car = partial_update.update(new_car, synchronize_session = False)
+    db.commit()
+    return { "message" : f"Partial updation on id {id} is done", "data": partial_update.first()}
