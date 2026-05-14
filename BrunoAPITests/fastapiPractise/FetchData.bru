@@ -4,15 +4,17 @@ meta {
   seq: 1
 }
 
-patch {
-  url: http://127.0.0.1:8000/garage/4
+put {
+  url: http://127.0.0.1:8000/garage/sqlalchemy/2
   body: json
   auth: inherit
 }
 
 body:json {
   {
-    "name": "BMW M8"
+    "name": "BMW",
+    "power": "DRIFT and SPEED King",
+    "launched": "2026-03-29"
   }
 }
 

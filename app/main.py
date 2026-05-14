@@ -114,6 +114,9 @@ def partial_update(id:int, garage: Garage):
     return {"New data": partially_updated_car}
 
 
+
+
+#=================================================================================================================================================================================
 #SQLALCHEMY Database buildup 
 @app.post("/garage/sqlachemy/")
 def garage_sqlalchemy(garage: Garage, db: Session = Depends(get_db)):
@@ -142,3 +145,32 @@ def get_specific_one(id: int, db: Session = Depends(get_db)):
             detail = f"Car with the specific id: {id} could not be retrieved."
         )
     return {"Car details": car}
+
+
+@app.put("/garage/sqlalchemy/{id}")
+def update_function(id: int, garage: Garage, db: Session = Depends(get_db)):
+    car_add = db.query(models.Garage).filter(models.Garage.id == id)
+    if not car_add: 
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = f"Car addition the specific id: {id} could not be retrieved for update."
+        )
+    garage_cars= garage.model_dump()   #in car_add we get a pydantic object and model_dump converts it to dictionary because updated only works on dictionary.
+    print("Garage Cars informations: ", garage_cars)
+    updated_car = car_add.update(garage_cars, synchronize_session = False)
+    db.commit()
+    # db.refresh(updated_car)
+    return {"Car updation": car_add.first()}
+    
+
+@app.delete("/garage/sqlalchemy/{id}")
+def deletion_function(id: int, db: Session= Depends(get_db)):
+    deleted_car = db.query(models.Garage).filter(models.Garage.id == id)
+    if not deleted_car:
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = f"Car with the id {id} could not be deleted"
+        )
+    deleted_car.delete(synchronize_session=False)
+    db.commit()
+    return (f"Car with id{id} is deleted")
