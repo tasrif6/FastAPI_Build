@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date
+from sqlalchemy import Column, Integer, String, Date, TIMESTAMP, text
 from . database import Base
 
 class Garage(Base):
@@ -8,5 +8,10 @@ class Garage(Base):
     power = Column(String, nullable=False)
     launched = Column(Date, nullable = False)
     
-
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, nullable=False)
+    email = Column(String, nullable=False, unique = True)
+    password = Column(String, nullable= False)
+    created_at = Column(TIMESTAMP(timezone = True), nullable=False, server_default=text('now()'))
 

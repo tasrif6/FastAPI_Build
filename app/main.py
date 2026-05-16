@@ -1,29 +1,16 @@
 from fastapi import FastAPI, HTTPException, status, Response, Depends
-from pydantic import BaseModel, HttpUrl
-from datetime import date
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from . import models
+from . import models, schema
 from sqlalchemy.orm import Session
 from . database import engine, get_db
-
+from typing import List
 
 # main object calling for class
 app = FastAPI()
 
 models.Base.metadata.create_all(bind= engine)
 
-#define request body schema
-class Garage(BaseModel):
-    name: str
-    power: str
-    launched: date
-
-class GarageUpdate(BaseModel):
-    car_id: int | None = None
-    name: str | None = None
-    power: str | None = None
-    launched: date | None = None
 
 #Database connection setup
 while True:
@@ -43,8 +30,8 @@ while True:
 #     data = cursor.fetchall()
 #     print(data)
 
-@app.post("/post")
-def create_post(post: Garage):
+@app.post("/post", response_model = schema.GarageResponse)
+def create_post(post: schema.Garage):
     try:
         cursor.execute(""" Insert into garage(name, power, launched) values (%s, %s, %s) Returning * """, (post.name, post.power, post.launched))
         new_post = cursor.fetchone()
@@ -89,8 +76,8 @@ def delete_car(id: int):
         )
     return (f"message: Car is deleted")
 
-@app.put("/garage/{id}")
-def update_car(id: int, garage: Garage):
+@app.put("/garage/{id}", response_model = schema.GarageResponse)
+def update_car(id: int, garage: schema.Garage):
     cursor.execute("""update garage set name=%s, power = %s, launched=%s where car_id = %s Returning * """,(garage.name, garage.power, garage.launched, str(id)))
     updated_car = cursor.fetchone()
     connected.commit()
@@ -101,8 +88,8 @@ def update_car(id: int, garage: Garage):
         )
     return {"data": updated_car}
 
-@app.patch("/garage/{id}")
-def partial_update(id:int, garage: Garage):
+@app.patch("/garage/{id}", response_model = schema.GarageResponse)
+def partial_update(id:int, garage: schema.Garage):
     cursor.execute(""" update garage set name =%s, power = %s, launched= %s where car_id = %s Returning * """, (garage.name, garage.power, garage.launched, str(id)))
     partially_updated_car = cursor.fetchone()
     connected.commit()
@@ -118,23 +105,26 @@ def partial_update(id:int, garage: Garage):
 
 #=================================================================================================================================================================================
 #SQLALCHEMY Database buildup 
-@app.post("/garage/sqlachemy/")
-def garage_sqlalchemy(garage: Garage, db: Session = Depends(get_db)):
-    new_car = models.Garage(
-        name = garage.name,
-        power = garage.power,
-        launched = garage.launched
-    )
+@app.post("/garage/sqlalchemy/", response_model = schema.GarageResponse)
+def garage_sqlalchemy(garage: schema.Garage, db: Session = Depends(get_db)):
+    # new_car = models.Garage(
+    #     name = garage.name,
+    #     power = garage.power,
+    #     launched = garage.launched
+    # )
+    new_car = models.Garage(**garage.model_dump())
 
     db.add(new_car)
     db.commit()
     db.refresh(new_car)
-    return {"New Car details": new_car}
+    # return {"New Car details": new_car}
+    return new_car
 
-@app.get("/sqlalchemy")
+@app.get("/sqlalchemy", response_model = List[schema.Garage])
 def get_all(db: Session = Depends(get_db)):
     cars = db.query(models.Garage).all()
-    return {"All Cars": cars}
+    # return {"All Cars": cars}
+    return cars
 
 @app.get("/sqlalchemy/{id}")
 def get_specific_one(id: int, db: Session = Depends(get_db)):
@@ -144,11 +134,12 @@ def get_specific_one(id: int, db: Session = Depends(get_db)):
             status_code = status.HTTP_204_NO_CONTENT,
             detail = f"Car with the specific id: {id} could not be retrieved."
         )
-    return {"Car details": car}
+    # return {"Car details": car}
+    return car
 
 
-@app.put("/garage/sqlalchemy/{id}")
-def update_function(id: int, garage: Garage, db: Session = Depends(get_db)):
+@app.put("/garage/sqlalchemy/{id}", response_model = schema.GarageResponse)
+def update_function(id: int, garage: schema.Garage, db: Session = Depends(get_db)):
     car_add = db.query(models.Garage).filter(models.Garage.id == id)
     if not car_add: 
         raise HTTPException(
@@ -159,9 +150,9 @@ def update_function(id: int, garage: Garage, db: Session = Depends(get_db)):
     print("Garage Cars informations: ", garage_cars)
     updated_car = car_add.update(garage_cars, synchronize_session = False)
     db.commit()
-    # db.refresh(updated_car)
-    return {"Car updation": car_add.first()}
-    
+    # db.refresh(car_add)
+    # return {"Car updation": car_add.first()}
+    return car_add.first()
 
 @app.delete("/garage/sqlalchemy/{id}")
 def deletion_function(id: int, db: Session= Depends(get_db)):
@@ -173,10 +164,11 @@ def deletion_function(id: int, db: Session= Depends(get_db)):
         )
     deleted_car.delete(synchronize_session=False)
     db.commit()
-    return (f"Car with id{id} is deleted")
+    # return (f"Car with id{id} is deleted")
+    return id
 
-@app.patch("/garage/sqlalchemy/{id}")
-def partial_update(id: int, garage : Garage, db: Session = Depends(get_db)):
+@app.patch("/garage/sqlalchemy/{id}", response_model = schema.GarageResponse)
+def partial_update(id: int, garage : schema.Garage, db: Session = Depends(get_db)):
     partial_update = db.query(models.Garage).filter(models.Garage.id == id)
     if partial_update.first() is None:
         raise HTTPException(
@@ -186,4 +178,14 @@ def partial_update(id: int, garage : Garage, db: Session = Depends(get_db)):
     new_car = garage.model_dump()
     partial_updated_car = partial_update.update(new_car, synchronize_session = False)
     db.commit()
-    return { "message" : f"Partial updation on id {id} is done", "data": partial_update.first()}
+    # return { "message" : f"Partial updation on id {id} is done", "data": partial_update.first()}
+
+
+#=============================================================================================================================================
+@app.post("/users", status_code = status.HTTP_201_CREATED)
+def login(users: schema.UsersCreate, db: Session = Depends(get_db)):
+    new_user = models.User(**users.model_dump())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
