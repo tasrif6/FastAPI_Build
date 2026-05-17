@@ -18,7 +18,7 @@ class GarageResponse(Garage):
     id : int
     
     class Config:
-        orm_model = True
+        orm_mode = True
 
 
 class UsersCreate(BaseModel):
