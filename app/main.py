@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, status, Response, Depends
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from . import models, schema
+from . import models, schema, utils
 from sqlalchemy.orm import Session
 from . database import engine, get_db
 from typing import List
@@ -183,7 +183,11 @@ def partial_update(id: int, garage : schema.Garage, db: Session = Depends(get_db
 
 #=============================================================================================================================================
 @app.post("/users", status_code = status.HTTP_201_CREATED)
-def login(users: schema.UsersCreate, db: Session = Depends(get_db)):
+def create_user(users: schema.UsersCreate, db: Session = Depends(get_db)):
+    if db.query(models.User).filter(models.User.email == users.email).first():
+        raise HTTPException(400, "Email Already Exists.")
+    hashed_password = utils.hash_password(users.password)
+    users.password = hashed_password
     new_user = models.User(**users.model_dump())
     db.add(new_user)
     db.commit()
