@@ -4,10 +4,10 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from typing import List
 
-router = APIRouter()
+router = APIRouter(prefix = "/garage")
 
 # SQLALCHEMY Database buildup
-@router.post("/garage/sqlalchemy/", response_model=schema.GarageResponse)
+@router.post("/sqlalchemy", response_model=schema.GarageResponse)
 def garage_sqlalchemy(garage: schema.Garage, db: Session = Depends(get_db)):
     # new_car = models.Garage(
     #     name = garage.name,
@@ -40,7 +40,7 @@ def get_specific_one(id: int, db: Session = Depends(get_db)):
     return car
 
 
-@router.put("/garage/sqlalchemy/{id}", response_model = schema.GarageResponse)
+@router.put("/sqlalchemy/{id}", response_model = schema.GarageResponse)
 def update_function(id: int, garage: schema.Garage, db: Session = Depends(get_db)):
     car_add = db.query(models.Garage).filter(models.Garage.id == id)
     if not car_add: 

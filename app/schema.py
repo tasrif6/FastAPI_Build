@@ -18,9 +18,13 @@ class GarageResponse(Garage):
     id : int
     
     class Config:
-        orm_mode = True
+        orm_model = True
 
 
 class UsersCreate(BaseModel):
     email : EmailStr 
+    password: str
+
+class Login(BaseModel):
+    email: EmailStr
     password: str
