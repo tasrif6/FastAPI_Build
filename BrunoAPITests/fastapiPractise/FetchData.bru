@@ -7,14 +7,23 @@ meta {
 post {
   url: http://127.0.0.1:8000/login
   body: json
-  auth: inherit
+  auth: bearer
+}
+
+auth:bearer {
+  token: 4ea1b88667eaed38b12798d9012c683dfaec15f4f3232733a88641f3d55f054b
 }
 
 body:json {
   {
-    "email": "mithu@gmail.com",
-    "password": "mithu22"
+    "email": "jack@gmail.com",
+    "password": "jack@123"
   }
+}
+
+body:multipart-form {
+  username: jack@gmail.com
+  password: jack@123
 }
 
 settings {
