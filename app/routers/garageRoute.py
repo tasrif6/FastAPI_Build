@@ -26,8 +26,8 @@ def garage_sqlalchemy(garage: schema.Garage, db: Session = Depends(get_db), curr
     return new_car
 
 @router.get("/sqlalchemy", response_model = List[schema.Garage])
-def get_all(db: Session = Depends(get_db)):
-    cars = db.query(models.Garage).all()
+def get_all(db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.current_user)):
+    cars = db.query(models.Garage).filter(models.Garage.creator_id == current_user.id).all()
     # return {"All Cars": cars}
     return cars
 
