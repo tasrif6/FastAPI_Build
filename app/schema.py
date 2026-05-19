@@ -16,7 +16,8 @@ class GarageUpdate(BaseModel):
 
 class GarageResponse(Garage):
     id : int
-    
+    creator_id : int
+
     class Config:
         orm_model = True
 

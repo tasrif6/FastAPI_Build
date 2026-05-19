@@ -1,5 +1,9 @@
 from fastapi import FastAPI
 from . routers import garageRoute, usersRoute, basicModel, auth
+from . import models
+from . database import engine
+
+models.Base.metadata.create_all(bind= engine)
 
 # main object calling for class
 app = FastAPI()

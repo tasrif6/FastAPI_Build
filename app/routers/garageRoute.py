@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from app import models, schema
+from app import models, schema, oauth2
 from sqlalchemy.orm import Session
 from app.database import get_db
 from typing import List
@@ -8,13 +8,16 @@ router = APIRouter(prefix = "/garage")
 
 # SQLALCHEMY Database buildup
 @router.post("/sqlalchemy", response_model=schema.GarageResponse)
-def garage_sqlalchemy(garage: schema.Garage, db: Session = Depends(get_db)):
+def garage_sqlalchemy(garage: schema.Garage, db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.current_user)):
     # new_car = models.Garage(
     #     name = garage.name,
     #     power = garage.power,
     #     launched = garage.launched
     # )
-    new_car = models.Garage(**garage.model_dump())
+    print(current_user.id)
+    print(current_user.email)
+
+    new_car = models.Garage(**garage.model_dump(), creator_id = current_user.id)
 
     db.add(new_car)
     db.commit()
