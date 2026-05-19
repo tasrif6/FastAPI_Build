@@ -10,6 +10,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 def create_user(users: schema.UsersCreate, db: Session = Depends(get_db)):
     if db.query(models.User).filter(models.User.email == users.email).first():
         raise HTTPException(400, "Email Already Exists.")
+    
     hashed_password = hash_password(users.password)
     users.password = hashed_password
     new_user = models.User(**users.model_dump())
