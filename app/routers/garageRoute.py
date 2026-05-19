@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from app import models, schema, oauth2
 from sqlalchemy.orm import Session
 from app.database import get_db
-from typing import List
+from typing import List, Optional
 
 router = APIRouter(prefix = "/garage")
 
@@ -26,18 +26,25 @@ def garage_sqlalchemy(garage: schema.Garage, db: Session = Depends(get_db), curr
     return new_car
 
 @router.get("/sqlalchemy", response_model = List[schema.Garage])
-def get_all(db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.current_user)):
-    cars = db.query(models.Garage).filter(models.Garage.creator_id == current_user.id).all()
+def get_all(db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.current_user), search : Optional[str]=""):
+    cars = db.query(models.Garage).filter(models.Garage.creator_id == current_user.id).filter(models.Garage.name.contains(search)).all()
     # return {"All Cars": cars}
+    
     return cars
 
 @router.get("/sqlalchemy/{id}")
-def get_specific_one(id: int, db: Session = Depends(get_db)):
+def get_specific_one(id: int, db: Session = Depends(get_db), current_user : models.User = Depends(oauth2.current_user)):
     car = db.query(models.Garage).filter(models.Garage.id == id ).first()
     if not car:
         raise HTTPException(
             status_code = status.HTTP_204_NO_CONTENT,
             detail = f"Car with the specific id: {id} could not be retrieved."
+        )
+    
+    if car.creator_id != current_user.id:
+        raise HTTPException(
+            status_code = status.HTTP_403_FORBIDDEN,
+            detail = "Not Authorized yet. Please Login first."
         )
     # return {"Car details": car}
     return car
